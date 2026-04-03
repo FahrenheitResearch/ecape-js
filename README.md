@@ -2,6 +2,9 @@
 
 `ecape-js` is a JavaScript rewrite of the Python `ecape-parcel` package.
 
+It is based on the original Python implementation and ports that package’s
+calculation flow into JavaScript.
+
 It keeps the package split that the Python version uses:
 
 - `ecape.js`: high-level parcel calculations
@@ -329,6 +332,15 @@ Useful entrypoints in this repository:
 - `verification/run_verify.py`: full Python vs JS parity run
 - `verification/focus_case.py`: lightweight focused regression case
 
+## Acknowledgements
+
+This package is a JavaScript rewrite of the original Python `ecape-parcel`
+package, and that Python implementation is the reference this port was built
+and checked against.
+
+Thanks to the original `ecape-parcel` package author and upstream work that
+made this port possible.
+
 ## License
 
-Match the licensing terms you want to use for the repository before publishing or distributing the package.
+MIT
