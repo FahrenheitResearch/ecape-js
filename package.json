@@ -1,0 +1,26 @@
+{
+  "name": "ecape-js",
+  "version": "0.1.0",
+  "description": "JavaScript rewrite of the Python ecape-parcel package",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./ecape": "./ecape.js",
+    "./ecape_calc": "./ecape_calc.js"
+  },
+  "files": [
+    "index.js",
+    "ecape.js",
+    "ecape_calc.js",
+    "README.md"
+  ],
+  "keywords": [
+    "ecape",
+    "meteorology",
+    "sounding",
+    "parcel",
+    "cape"
+  ],
+  "license": "UNLICENSED"
+}
