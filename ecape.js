@@ -34,6 +34,10 @@ function nullProfile(length) {
   return [Array.from({ length }, () => null), Array.from({ length }, () => null), Array.from({ length }, () => null), Array.from({ length }, () => null), Array.from({ length }, () => null)];
 }
 
+function isFiniteScalarQuantity(input, unit) {
+  return input !== null && Number.isFinite(valuesInUnit(input, unit));
+}
+
 export function entrainmentRate(cape, ecape, ncape, vsr, stormColumnHeight) {
   const capeValue = valuesInUnit(cape, 'J/kg');
   const ecapeValue = valuesInUnit(ecape, 'J/kg');
@@ -128,6 +132,14 @@ export function calcEcapeParcel(
     }
   }
 
+  if (entrainmentSwitch && (
+    !isFiniteScalarQuantity(capeValue, 'J/kg')
+    || !isFiniteScalarQuantity(lfcValue, 'm')
+    || !isFiniteScalarQuantity(elValue, 'm')
+  )) {
+    throw new Error('Entraining parcel requires finite CAPE, LFC, and EL.');
+  }
+
   if (entrainmentSwitch && valuesInUnit(capeValue, 'J/kg') <= 0) {
     if (alignToInputPressureValues) {
       return nullProfile(pressurePa.length);
@@ -137,6 +149,31 @@ export function calcEcapeParcel(
 
   let entrainment = qty(0, 'dimensionless');
   if (entrainmentSwitch) {
+    const ecapeReferenceParcel = calcParcelProfile(pressure, height, temperature, dewpoint, true, {
+      capeType,
+      mixedLayerDepthPressure,
+      mixedLayerDepthHeight,
+      pseudoadiabaticSwitch,
+      entrainmentRate: qty(0, 'dimensionless'),
+      originPressure,
+      originHeight,
+      originTemperature,
+      originDewpoint,
+      dz,
+    });
+    const [, , ecapeReferenceLfc, ecapeReferenceEl] = customCapeCinLfcEl(
+      ecapeReferenceParcel[1],
+      ecapeReferenceParcel[2],
+      ecapeReferenceParcel[3],
+      ecapeReferenceParcel[4],
+      height,
+      temperature,
+      qty(specificHumidityKgKg, 'kg/kg'),
+    );
+    if (!isFiniteScalarQuantity(ecapeReferenceLfc, 'm') || !isFiniteScalarQuantity(ecapeReferenceEl, 'm')) {
+      throw new Error('Entraining parcel reference path requires finite LFC and EL.');
+    }
+
     const [ecape, ncape] = calcEcapeNcape(
       height,
       pressure,

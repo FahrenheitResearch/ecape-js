@@ -706,6 +706,20 @@ export function calcParcelProfile(pressure, height, temperature, dewpoint, align
     throw new Error('Pressure, height, temperature, and dewpoint must have the same length.');
   }
 
+  for (let i = 0; i < pressurePa.length; i += 1) {
+    if (![pressurePa[i], heightM[i], temperatureK[i], dewpointK[i]].every(Number.isFinite)) {
+      throw new Error('Pressure, height, temperature, and dewpoint must be finite.');
+    }
+    if (i > 0) {
+      if (!(pressurePa[i] < pressurePa[i - 1])) {
+        throw new Error('Pressure profile must be strictly decreasing.');
+      }
+      if (!(heightM[i] > heightM[i - 1])) {
+        throw new Error('Height profile must be strictly increasing.');
+      }
+    }
+  }
+
   const specificHumidityKgKg = asNumericArray(specificHumidityFromDewpoint(pressure, dewpoint), 'kg/kg');
   const origin = selectParcelOriginValues(pressurePa, heightM, temperatureK, dewpointK, options);
   const dz = valuesInUnit(options.dz || qty(DEFAULT_DZ_METERS, 'm'), 'm');
@@ -729,11 +743,19 @@ export function calcParcelProfile(pressure, height, temperature, dewpoint, align
     const envTemperature = valuesInUnit(linearInterp(qty(heightM, 'm'), qty(temperatureK, 'K'), qty(parcelHeight, 'm')), 'K');
     const parcelSaturationQv = (1 - parcelQt) * valuesInUnit(rSat(qty(parcelTemperature, 'K'), qty(parcelPressure, 'Pa'), 1), 'kg/kg');
 
+    if (![envTemperature, parcelSaturationQv, parcelPressure, parcelHeight, parcelTemperature, parcelQv, parcelQt].every(Number.isFinite)) {
+      throw new Error('Non-finite parcel profile encountered.');
+    }
+
     parcelPressure = valuesInUnit(pressureAtHeight(qty(parcelPressure, 'Pa'), qty(dz, 'm'), qty(envTemperature, 'K')), 'Pa');
     parcelHeight += dz;
 
     const nextEnvTemperature = valuesInUnit(linearInterp(qty(heightM, 'm'), qty(temperatureK, 'K'), qty(parcelHeight, 'm')), 'K');
     const envQv = valuesInUnit(linearInterp(qty(heightM, 'm'), qty(specificHumidityKgKg, 'kg/kg'), qty(parcelHeight, 'm')), 'kg/kg');
+
+    if (![parcelPressure, parcelHeight, nextEnvTemperature, envQv].every(Number.isFinite)) {
+      throw new Error('Non-finite parcel profile encountered.');
+    }
 
     if (parcelSaturationQv > parcelQv) {
       const dTdz = valuesInUnit(
@@ -785,6 +807,10 @@ export function calcParcelProfile(pressure, height, temperature, dewpoint, align
       }
     }
 
+    if (![parcelPressure, parcelHeight, parcelTemperature, parcelQv, parcelQt].every(Number.isFinite)) {
+      throw new Error('Non-finite parcel profile encountered.');
+    }
+
     pressureRaw.push(parcelPressure);
     heightRaw.push(parcelHeight);
     temperatureRaw.push(parcelTemperature);
@@ -812,11 +838,17 @@ export function calcParcelProfile(pressure, height, temperature, dewpoint, align
     const inputPressure = pressurePa[i];
     const inputHeight = heightM[i];
     if (inputPressure <= pressureRaw[0] && inputPressure >= pressureRaw[pressureRaw.length - 1]) {
+      const alignedTemperatureValue = valuesInUnit(reverseLinearInterp(qty(pressureRaw, 'Pa'), qty(temperatureRaw, 'K'), qty(inputPressure, 'Pa')), 'K');
+      const alignedQvValue = valuesInUnit(reverseLinearInterp(qty(pressureRaw, 'Pa'), qty(qvRaw, 'kg/kg'), qty(inputPressure, 'Pa')), 'kg/kg');
+      const alignedQtValue = valuesInUnit(reverseLinearInterp(qty(pressureRaw, 'Pa'), qty(qtRaw, 'kg/kg'), qty(inputPressure, 'Pa')), 'kg/kg');
+      if (![alignedTemperatureValue, alignedQvValue, alignedQtValue].every(Number.isFinite)) {
+        throw new Error('Non-finite aligned parcel profile encountered.');
+      }
       alignedPressure.push(inputPressure);
       alignedHeight.push(inputHeight);
-      alignedTemperature.push(valuesInUnit(reverseLinearInterp(qty(pressureRaw, 'Pa'), qty(temperatureRaw, 'K'), qty(inputPressure, 'Pa')), 'K'));
-      alignedQv.push(valuesInUnit(reverseLinearInterp(qty(pressureRaw, 'Pa'), qty(qvRaw, 'kg/kg'), qty(inputPressure, 'Pa')), 'kg/kg'));
-      alignedQt.push(valuesInUnit(reverseLinearInterp(qty(pressureRaw, 'Pa'), qty(qtRaw, 'kg/kg'), qty(inputPressure, 'Pa')), 'kg/kg'));
+      alignedTemperature.push(alignedTemperatureValue);
+      alignedQv.push(alignedQvValue);
+      alignedQt.push(alignedQtValue);
     } else {
       alignedPressure.push(inputPressure);
       alignedHeight.push(inputHeight);
@@ -1139,11 +1171,11 @@ export function calcEcapeNcape(
     specificHumidityInput,
   );
   const capeValue = cape || undilutedCape;
-  const parcelTemperatureK = asNumericArray(parcel[2], 'K');
-  const envTemperatureK = asNumericArray(temperature, 'K');
-  const estimatedLfcEl = estimateLfcElFromParcelTemperatures(heightM, envTemperatureK, parcelTemperatureK);
-  const lfcValue = options.lfc || estimatedLfcEl[0] || undilutedLfc;
-  const elValue = options.el || estimatedLfcEl[1] || undilutedEl;
+  const lfcValue = options.lfc || undilutedLfc;
+  const elValue = options.el || undilutedEl;
+  if (lfcValue === null || elValue === null) {
+    throw new Error('ECAPE requires finite LFC and EL.');
+  }
   const ncape = qty(
     computeNcapeReference(
       asNumericArray(temperature, 'K'),
