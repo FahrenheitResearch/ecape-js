@@ -13,6 +13,7 @@ import {
   customCapeCinLfcEl,
   calcEcapeNcape,
   calcSrWind,
+  windComponentsFromDirectionSpeed,
   calcParcelProfile,
   DEFAULT_DZ_METERS,
 } from './ecape_calc.js';
@@ -256,6 +257,7 @@ export {
   customCapeCinLfcEl,
   calcEcapeNcape,
   calcSrWind,
+  windComponentsFromDirectionSpeed,
   pressureAtHeight,
   linearInterp,
   reverseLinearInterp,
@@ -270,4 +272,5 @@ export const entrainment_rate = entrainmentRate;
 export const updraft_radius = updraftRadius;
 export const custom_cape_cin_lfc_el = customCapeCinLfcEl;
 export const specific_humidity_from_dewpoint = specificHumidityFromDewpoint;
+export const wind_components_from_direction_speed = windComponentsFromDirectionSpeed;
 export const dewpoint_from_specific_humidity = dewpointFromSpecificHumidity;

@@ -61,6 +61,7 @@ Primary exports:
 
 - `qty(value, unit)`
 - `toUnit(quantity, unit)`
+- `windComponentsFromDirectionSpeed(...)`
 - `calcEcape(...)`
 - `calcEcapeNcape(...)`
 - `calcSrWind(...)`
@@ -150,6 +151,26 @@ Defaults built into the package still use explicit quantities:
 - `inflowLayerTop = qty(1, 'km')`
 - `dz = qty(20, 'm')`
 
+## Wind component convention
+
+The library uses Cartesian wind components:
+
+- `u > 0` means eastward
+- `u < 0` means westward
+- `v > 0` means northward
+- `v < 0` means southward
+
+The helper `windComponentsFromDirectionSpeed(...)` converts direction and speed
+into `u/v`.
+
+By default it assumes standard meteorological wind direction:
+
+- direction is where the wind is coming from
+- `180° at 20 kt` becomes `u = 0 kt`, `v = 20 kt`
+
+If you instead need a heading or motion direction, use
+`convention: 'heading_to'`.
+
 ## Scalar and array behavior
 
 Helper functions accept scalars or arrays and will broadcast scalars against arrays where that is mathematically valid.
@@ -236,6 +257,34 @@ const [ecape, ncape] = calcEcapeNcape(
   },
 );
 ```
+
+## Example: converting SounderPy `WDIR/WSPD` to `u/v`
+
+```js
+import { qty, windComponentsFromDirectionSpeed } from './index.js';
+
+const wdir = qty([194.7, 197.7, 202.9], 'degree');
+const wspd = qty([12.4, 21.6, 26.8], 'kt');
+
+const { u, v } = windComponentsFromDirectionSpeed(wdir, wspd, {
+  convention: 'meteorological_from',
+  outputUnit: 'm/s',
+});
+```
+
+For a single value:
+
+```js
+const { u, v } = windComponentsFromDirectionSpeed(
+  qty(180, 'degree'),
+  qty(20, 'kt'),
+);
+```
+
+That returns approximately:
+
+- `u = 0 m/s`
+- `v = 10.29 m/s`
 
 ## `calcEcapeParcel` options
 

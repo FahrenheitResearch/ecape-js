@@ -134,6 +134,37 @@ function inferOutputShape(...inputs) {
   });
 }
 
+export function windComponentsFromDirectionSpeed(direction, speed, options = {}) {
+  const {
+    convention = 'meteorological_from',
+    outputUnit = 'm/s',
+  } = options;
+  const directionDegrees = asNumericArray(direction, 'degree');
+  const speedMS = asNumericArray(speed, 'm/s');
+  const [dir, spd, length] = broadcastPair(directionDegrees, speedMS);
+  const preferScalar = inferOutputShape(direction, speed);
+  const uValues = new Array(length);
+  const vValues = new Array(length);
+
+  for (let i = 0; i < length; i += 1) {
+    const radians = dir[i] * (Math.PI / 180);
+    if (convention === 'heading_to') {
+      uValues[i] = spd[i] * Math.sin(radians);
+      vValues[i] = spd[i] * Math.cos(radians);
+    } else if (convention === 'meteorological_from') {
+      uValues[i] = -spd[i] * Math.sin(radians);
+      vValues[i] = -spd[i] * Math.cos(radians);
+    } else {
+      throw new Error(`Unsupported wind direction convention: ${convention}`);
+    }
+  }
+
+  return {
+    u: toUnit(makeQuantityFromArray(uValues, 'm/s', preferScalar), outputUnit),
+    v: toUnit(makeQuantityFromArray(vValues, 'm/s', preferScalar), outputUnit),
+  };
+}
+
 function broadcastNumericArray(values, length) {
   if (values.length === length) {
     return values.slice();
@@ -1295,6 +1326,7 @@ export const calc_integral_arg = calcIntegralArg;
 export const calc_ncape = calcNcape;
 export const calc_psi = calcPsi;
 export const custom_cape_cin_lfc_el = customCapeCinLfcEl;
+export const wind_components_from_direction_speed = windComponentsFromDirectionSpeed;
 export const vapor_pressure = vaporPressure;
 export const vapor_pressure_from_specific_humidity = vaporPressureFromSpecificHumidity;
 export const dewpoint_from_vapor_pressure = dewpointFromVaporPressure;
