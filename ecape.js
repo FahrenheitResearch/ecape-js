@@ -90,6 +90,11 @@ export function calcEcapeParcel(
     dz = DEFAULT_DZ,
   } = options;
 
+  const effectiveStormMotionType =
+    (stormMotionU !== null || stormMotionV !== null) && options.stormMotionType === undefined
+      ? 'user_defined'
+      : stormMotionType;
+
   let capeValue = cape;
   let lfcValue = lfc;
   let elValue = el;
@@ -101,7 +106,7 @@ export function calcEcapeParcel(
       capeType,
       mixedLayerDepthPressure,
       mixedLayerDepthHeight,
-      stormMotionType,
+      stormMotionType: effectiveStormMotionType,
       inflowLayerBottom,
       inflowLayerTop,
       originPressure,
@@ -186,11 +191,11 @@ export function calcEcapeParcel(
       {
         inflowBottom: inflowLayerBottom,
         inflowTop: inflowLayerTop,
-        stormMotion: stormMotionType,
+        stormMotionType: effectiveStormMotionType,
         lfc: lfcValue,
         el: elValue,
-        uSm: stormMotionU,
-        vSm: stormMotionV,
+        stormMotionU,
+        stormMotionV,
         mixedLayerDepthPressure,
         mixedLayerDepthHeight,
         originPressure,
@@ -207,8 +212,8 @@ export function calcEcapeParcel(
       height,
       inflowLayerBottom,
       inflowLayerTop,
-      stormMotionType,
-      { smU: stormMotionU, smV: stormMotionV },
+      effectiveStormMotionType,
+      { stormMotionU, stormMotionV },
     );
 
     const parcelOrigin = calcParcelProfile(pressure, height, temperature, dewpoint, false, {

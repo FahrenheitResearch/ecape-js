@@ -1090,6 +1090,22 @@ function resolveStormMotion(pressurePa, uMS, vMS, heightM, stormMotionType = 'ri
   return stormMotionType === 'left_moving' ? bunkers.left : bunkers.right;
 }
 
+function normalizeStormMotionInputs(stormMotionType, stormMotionU, stormMotionV) {
+  const hasCustomMotion = stormMotionU !== null || stormMotionV !== null;
+  if (hasCustomMotion && (stormMotionType === undefined || stormMotionType === null || stormMotionType === 'right_moving')) {
+    return {
+      stormMotionType: 'user_defined',
+      stormMotionU,
+      stormMotionV,
+    };
+  }
+  return {
+    stormMotionType: stormMotionType || 'right_moving',
+    stormMotionU,
+    stormMotionV,
+  };
+}
+
 export function calcSrWind(
   pressure,
   uWind,
@@ -1107,16 +1123,21 @@ export function calcSrWind(
   const inflowBottomM = valuesInUnit(inflowLayerBottom, 'm');
   const inflowTopM = valuesInUnit(inflowLayerTop, 'm');
   const heightAgl = heightM.map((value) => value - heightM[0]);
+  const normalizedStormMotion = normalizeStormMotionInputs(
+    stormMotionType,
+    options.stormMotionU || options.smU || null,
+    options.stormMotionV || options.smV || null,
+  );
   const stormMotion = resolveStormMotion(
     pressurePa,
     uMS,
     vMS,
     heightAgl,
-    stormMotionType,
+    normalizedStormMotion.stormMotionType,
     inflowBottomM,
     inflowTopM,
-    options.smU || null,
-    options.smV || null,
+    normalizedStormMotion.stormMotionU,
+    normalizedStormMotion.stormMotionV,
   );
   const indices = clampIndex(heightAgl, (value) => value >= inflowBottomM && value <= inflowTopM);
   const speeds = (indices.length ? indices : [0]).map((index) => Math.hypot(uMS[index] - stormMotion.u, vMS[index] - stormMotion.v));
@@ -1187,15 +1208,23 @@ export function calcEcapeNcape(
     ),
     'J/kg',
   );
+  const normalizedStormMotion = normalizeStormMotionInputs(
+    options.stormMotionType || options.stormMotion || null,
+    options.stormMotionU || options.uSm || null,
+    options.stormMotionV || options.vSm || null,
+  );
   const srWind = calcSrWind(
     pressure,
     uWind,
     vWind,
     height,
-    options.inflowBottom || qty(0, 'm'),
-    options.inflowTop || qty(1000, 'm'),
-    options.stormMotion || 'right_moving',
-    { smU: options.uSm || null, smV: options.vSm || null },
+    options.inflowLayerBottom || options.inflowBottom || qty(0, 'm'),
+    options.inflowLayerTop || options.inflowTop || qty(1000, 'm'),
+    normalizedStormMotion.stormMotionType,
+    {
+      stormMotionU: normalizedStormMotion.stormMotionU,
+      stormMotionV: normalizedStormMotion.stormMotionV,
+    },
   );
   const psi = calcPsi(elValue);
   const ecape = calcEcapeA(srWind, psi, ncape, capeValue);

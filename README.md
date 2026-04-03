@@ -161,6 +161,33 @@ const parcelDensityTemperature = densityTemperature(
 );
 ```
 
+## Example: custom storm motion
+
+You can pass a custom storm motion directly into the ECAPE calculations with
+`stormMotionType: 'user_defined'`, `stormMotionU`, and `stormMotionV`.
+
+```js
+import { qty, calcEcapeNcape } from './index.js';
+
+const [ecape, ncape] = calcEcapeNcape(
+  height,
+  pressure,
+  temperature,
+  specificHumidity,
+  uWind,
+  vWind,
+  'most_unstable',
+  null,
+  {
+    stormMotionType: 'user_defined',
+    stormMotionU: qty(12, 'm/s'),
+    stormMotionV: qty(4, 'm/s'),
+    inflowLayerBottom: qty(0, 'km'),
+    inflowLayerTop: qty(1, 'km'),
+  },
+);
+```
+
 ## `calcEcapeParcel` options
 
 `calcEcapeParcel(..., alignToInputPressureValues, options)`
