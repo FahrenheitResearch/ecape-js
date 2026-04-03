@@ -101,6 +101,55 @@ Internally, calculations are normalized to SI units.
 
 If a helper receives plain numbers or plain arrays, the function assumes its default SI-compatible unit. For reliable use, pass explicit quantities with `qty(...)`.
 
+## Default units for bare numbers
+
+Bare numbers are allowed, but they are interpreted in the function's default units.
+For sounding work, you should strongly prefer explicit `qty(...)` inputs.
+
+The most important trap is pressure:
+
+- bare pressure arrays like `[1000, 925, 850]` are treated as `Pa`, not `hPa`
+- if your sounding pressure is in `hPa`, use `qty([...], 'hPa')`
+
+Profile inputs:
+
+- `pressure`: `Pa`
+- `height`: `m`
+- `temperature`: `K`
+- `dewpoint`: `K`
+- `specificHumidity`: `kg/kg`
+- `uWind`: `m/s`
+- `vWind`: `m/s`
+
+`calcEcapeParcel(...)` options:
+
+- `cape`: `J/kg`
+- `lfc`: `m`
+- `el`: `m`
+- `stormMotionU`: `m/s`
+- `stormMotionV`: `m/s`
+- `originPressure`: `Pa`
+- `originHeight`: `m`
+- `originTemperature`: `K`
+- `originDewpoint`: `K`
+- `dz`: `m`
+
+Lower-level ECAPE options:
+
+- `inflowLayerBottom` / `inflowBottom`: `m`
+- `inflowLayerTop` / `inflowTop`: `m`
+- `stormMotionU` / `uSm`: `m/s`
+- `stormMotionV` / `vSm`: `m/s`
+- `mixedLayerDepthPressure`: `Pa` when passed as a bare number
+- `mixedLayerDepthHeight`: `m`
+
+Defaults built into the package still use explicit quantities:
+
+- `mixedLayerDepthPressure = qty(100, 'hPa')`
+- `inflowLayerBottom = qty(0, 'km')`
+- `inflowLayerTop = qty(1, 'km')`
+- `dz = qty(20, 'm')`
+
 ## Scalar and array behavior
 
 Helper functions accept scalars or arrays and will broadcast scalars against arrays where that is mathematically valid.

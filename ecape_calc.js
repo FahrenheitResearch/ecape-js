@@ -100,6 +100,27 @@ function asNumericArray(input, unit) {
   return toArray(valuesInUnit(input, unit));
 }
 
+function looksLikeBareHectoPascalPressure(input) {
+  if (isQuantity(input)) {
+    return false;
+  }
+  const values = toArray(input);
+  if (!values.length || !values.every(Number.isFinite)) {
+    return false;
+  }
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  return minValue >= 50 && maxValue <= 2000;
+}
+
+function assertPressureInputUnits(input, context = 'pressure') {
+  if (looksLikeBareHectoPascalPressure(input)) {
+    throw new Error(
+      `Bare ${context} values are interpreted as Pa. These values look like hPa. Wrap them with qty(..., 'hPa') or convert them to Pa first.`,
+    );
+  }
+}
+
 function makeQuantityFromArray(values, unit, preferScalar = false) {
   return qty(maybeScalar(values, preferScalar), unit);
 }
@@ -697,6 +718,7 @@ function selectParcelOriginValues(pressurePa, heightM, temperatureK, dewpointK, 
 }
 
 export function calcParcelProfile(pressure, height, temperature, dewpoint, alignToInputPressureValues = true, options = {}) {
+  assertPressureInputUnits(pressure, 'pressure');
   const pressurePa = asNumericArray(pressure, 'Pa');
   const heightM = asNumericArray(height, 'm');
   const temperatureK = asNumericArray(temperature, 'K');
@@ -1116,6 +1138,7 @@ export function calcSrWind(
   stormMotionType = 'right_moving',
   options = {},
 ) {
+  assertPressureInputUnits(pressure, 'pressure');
   const pressurePa = asNumericArray(pressure, 'Pa');
   const uMS = asNumericArray(uWind, 'm/s');
   const vMS = asNumericArray(vWind, 'm/s');
@@ -1169,6 +1192,7 @@ export function calcEcapeNcape(
   cape = null,
   options = {},
 ) {
+  assertPressureInputUnits(pressure, 'pressure');
   const heightM = asNumericArray(height, 'm');
   const specificHumidityKgKg = asNumericArray(specificHumidityInput, 'kg/kg');
   const dewpoint = dewpointFromSpecificHumidity(pressure, specificHumidityInput);
