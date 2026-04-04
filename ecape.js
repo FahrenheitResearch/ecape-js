@@ -101,7 +101,7 @@ export function calcEcapeParcel(
   let elValue = el;
 
   if ((capeValue === null || lfcValue === null || elValue === null) && entrainmentSwitch) {
-    const undilutedParcel = calcEcapeParcel(pressure, height, temperature, dewpoint, uWind, vWind, alignToInputPressureValues, {
+    const undilutedParcel = calcEcapeParcel(pressure, height, temperature, dewpoint, uWind, vWind, false, {
       entrainmentSwitch: false,
       pseudoadiabaticSwitch,
       capeType,
@@ -155,7 +155,7 @@ export function calcEcapeParcel(
 
   let entrainment = qty(0, 'dimensionless');
   if (entrainmentSwitch) {
-    const ecapeReferenceParcel = calcParcelProfile(pressure, height, temperature, dewpoint, true, {
+    const ecapeReferenceParcel = calcParcelProfile(pressure, height, temperature, dewpoint, false, {
       capeType,
       mixedLayerDepthPressure,
       mixedLayerDepthHeight,
